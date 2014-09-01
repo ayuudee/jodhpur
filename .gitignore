@@ -1,0 +1,17 @@
+# No intellij project files.
+*.iml
+*.ipr
+*.iws
+
+# Intellij Worksheets.
+# Note: be careful about this one if you copy this file to a new project.
+*.sc
+
+# Remove the intellij working directory.
+/.idea
+/.settings
+/.project
+
+# Miscellaneous.
+target
+atlassian-ide-plugin.xml

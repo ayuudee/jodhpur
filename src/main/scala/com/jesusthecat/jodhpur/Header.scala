@@ -28,7 +28,11 @@ object Header {
 
   implicit val HeaderCodecJson: CodecJson[Header] = {
     CodecJson(
-      jencode3L((h: Header) => (h.alg, h.typ, h.cty))("alg", "typ", "cty").encode,
+      (h: Header) =>
+        ("alg" := h.alg) ->:
+          ("typ" :=? h.typ) ->?:
+          ("cty" :=? h.cty) ->?:
+          jEmptyObject,
       c => for {
         alg <- (c --\ "alg").as[SigningAlgorithm]
         typ <- (c --\ "typ").as[String].option

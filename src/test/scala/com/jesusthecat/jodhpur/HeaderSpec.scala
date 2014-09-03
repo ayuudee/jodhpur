@@ -20,6 +20,12 @@ class HeaderSpec
         val json = header.asJson.nospaces
         Parse.decodeOption[Header](json).value should be(header)
       }
+
+      it("should symmetrically de/serialise an empty Header") {
+        val header = Header(NoAlgorithm)
+        val json = header.asJson.nospaces
+        Parse.decodeOption[Header](json).value should be(header)
+      }
     }
 
   }

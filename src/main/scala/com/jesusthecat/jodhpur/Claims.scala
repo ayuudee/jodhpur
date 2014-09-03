@@ -61,7 +61,15 @@ object Claims {
     }
 
     CodecJson(
-      jencode7L((c: Claims) => (c.iss, c.sub, c.aud, c.exp, c.nbf, c.iat, c.jti))("iss", "sub", "aud", "exp", "nbf", "iat", "jti").encode,
+        (c: Claims) =>
+          ("iss" :=? c.iss) ->?:
+            ("sub" :=? c.sub) ->?:
+            ("aud" :=? Option(c.aud).filter(_.nonEmpty)) ->?:
+            ("exp" :=? c.exp) ->?:
+            ("nbf" :=? c.nbf) ->?:
+            ("iat" :=? c.iat) ->?:
+            ("jti" :=? c.jti) ->?:
+            jEmptyObject,
       c => for {
         iss <- (c --\ "iss").as[StringOrUri].option
         sub <- (c --\ "sub").as[StringOrUri].option

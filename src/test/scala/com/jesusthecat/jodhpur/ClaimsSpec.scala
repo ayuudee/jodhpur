@@ -17,7 +17,12 @@ class ClaimsSpec
 
       it("should symmetrically de/serialise a full Claims set") {
         val claims = ModelFactory.aClaimsSet
+        val json = claims.asJson.nospaces
+        Parse.decodeOption[Claims](json).value should be(claims)
+      }
 
+      it("should symmetrically de/serialise an empty Claims set") {
+        val claims = Claims()
         val json = claims.asJson.nospaces
         Parse.decodeOption[Claims](json).value should be(claims)
       }

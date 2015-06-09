@@ -9,8 +9,8 @@
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <properties>
-        <scala.major.version>2.10</scala.major.version>
-        <scala.minor.version>4</scala.minor.version>
+        <scala.major.version>2.11</scala.major.version>
+        <scala.minor.version>6</scala.minor.version>
         <scala.version>${scala.major.version}.${scala.minor.version}</scala.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
@@ -27,19 +27,19 @@
         <dependency>
             <groupId>io.argonaut</groupId>
             <artifactId>argonaut_${scala.major.version}</artifactId>
-            <version>6.0.4</version>
+            <version>6.1</version>
         </dependency>
 
         <!-- TEST -->
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_2.10</artifactId>
-            <version>2.0</version>
+            <artifactId>scalatest_${scala.major.version}</artifactId>
+            <version>2.2.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.scalacheck</groupId>
-            <artifactId>scalacheck_2.10</artifactId>
+            <artifactId>scalacheck_${scala.major.version}</artifactId>
             <version>1.10.0</version>
         </dependency>
         <dependency>

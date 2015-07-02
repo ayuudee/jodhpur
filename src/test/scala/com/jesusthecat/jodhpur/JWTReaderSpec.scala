@@ -67,6 +67,11 @@ class JWTReaderSpec
         res should be(Failure(NonEmptyList(JWTReader.MsgSecretRequired)))
       }
 
+      it("should fail if there is no signature, but a secret has been provided") {
+        val res = new JWTReader(specCrypto).read(s"eyJ0eXAiOiJKV1QiLCAiYWxnIjoibm9uZSJ9.eyJpc3MiOiJqb2UiLCJleHAiOjEzMDA4MTkzODB9")
+        res should be(Failure(NonEmptyList(JWTReader.MsgSecretRequired)))
+      }
+
       it("should fail if token is expired") {
         val expiredInstant = Instant.now().minusSeconds(JWTReader.ThresholdSeconds * 2)
         val token = createSignedToken(

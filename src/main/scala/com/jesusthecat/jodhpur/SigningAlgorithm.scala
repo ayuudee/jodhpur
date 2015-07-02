@@ -7,8 +7,6 @@ sealed trait SigningAlgorithm {
 
   def key: String
 
-  def supports(that: String): Boolean = key == that
-
   def sign(secret: Array[Byte], bx: Array[Byte]): Array[Byte]
 }
 
@@ -18,7 +16,7 @@ object SigningAlgorithm {
 
   def parse(v: StringOrUri): Option[SigningAlgorithm] = {
     val norm = v.asString.toLowerCase
-    algorithms.find(_.supports(norm))
+    algorithms.find(_.key == norm)
   }
 }
 
@@ -36,9 +34,6 @@ object NoAlgorithm extends SigningAlgorithm {
 object HmacSHA256 extends SigningAlgorithm {
 
   override def key: String = "hs256"
-
-  override def supports(key: String): Boolean =
-    key == "hs256"
 
   override def sign(secret: Array[Byte], bx: Array[Byte]): Array[Byte] = {
     val hmac = Mac.getInstance("HmacSHA256")

@@ -11,8 +11,7 @@ import argonaut._
   * 
   * @param cryptoParams The cryptographic parameters that are expected to have been used
   * to sign a JWT. If `cryptoParams` is [[com.jesusthecat.jodhpur.NoCrypto]], only
-  * unverified JWTs are accepted; otherwise, unverified JWTs are not accepted (not yet
-  * implemented).
+  * unverified JWTs are accepted; otherwise, unverified JWTs are not accepted.
   */
 class JWTReader(cryptoParams: CryptoParams,
                 audience: Option[StringOrUri] = None,
@@ -62,25 +61,29 @@ class JWTReader(cryptoParams: CryptoParams,
 
   /** Check the signature (as appropriate) */
   private def verify(unverified: UnverifiedJwt,
-                     rep: EncodedRep): ValidationNel[String, JavascriptWebToken] = {
-    ((unverified.header.alg, rep.signatureBytesDecoded) match {
+    rep: EncodedRep): ValidationNel[String, JavascriptWebToken] = {
+    if(unverified.header.alg != cryptoParams.algorithm) {
+      MsgSecretRequired.failNel
+    } else {
+      ((unverified.header.alg, rep.signatureBytesDecoded) match {
 
-      case (NoAlgorithm, _) => unverified.successNel
+        case (NoAlgorithm, _) => unverified.successNel
 
-      case (alg, Some(sbx)) =>
-        import java.util.Arrays
-        cryptoParams match {
-          case HasCrypto(secret, expectedAlg) if
-            alg == expectedAlg && Arrays.equals(alg.sign(secret, rep.signingInput), sbx) =>
+        case (alg, Some(sbx)) =>
+          import java.util.Arrays
+          cryptoParams match {
+            case HasCrypto(secret, expectedAlg) if
+              Arrays.equals(alg.sign(secret, rep.signingInput), sbx) =>
             VerifiedJwt(unverified.header, unverified.claims).successNel
           case _ => MsgSecretRequired.failNel
         }
 
-      // Not enough information to verify.
-      case _ => MsgSecretRequired.failNel
-    }) flatMap {jwt =>
-      (validateExpiry(jwt) |@| validateIssuer(jwt) |@| validateAudience(jwt)) {
-        case (_, _, v) => v
+        // Not enough information to verify.
+        case _ => MsgSecretRequired.failNel
+      }) flatMap {jwt =>
+        (validateExpiry(jwt) |@| validateIssuer(jwt) |@| validateAudience(jwt)) {
+          case (_, _, v) => v
+        }
       }
     }
   }

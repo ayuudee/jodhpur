@@ -27,7 +27,7 @@ class JWTWriterSpec
       it("should symmetrically write a JavascriptWebToken") {
         val token = VerifiedJwt(header, claims)
         val encoded = new JWTWriter(Some(secret)).encode(token)
-        val decoded = new JWTReader(secret = Some(secret), issuer = token.claims.iss, audience = token.claims.aud.headOption).read(encoded)
+        val decoded = new JWTReader(HasCrypto(secret), issuer = token.claims.iss, audience = token.claims.aud.headOption).read(encoded)
         decoded.toOption.value should be(VerifiedJwt(token.header, token.claims))
       }
     }
@@ -36,7 +36,7 @@ class JWTWriterSpec
       it("should symmetrically write a JavascriptWebToken") {
         val token = UnverifiedJwt(header.copy(alg = NoAlgorithm), claims)
         val encoded = new JWTWriter().encode(token)
-        val decoded = new JWTReader(issuer = token.claims.iss, audience = token.claims.aud.headOption).read(encoded)
+        val decoded = new JWTReader(NoCrypto, issuer = token.claims.iss, audience = token.claims.aud.headOption).read(encoded)
         decoded.toOption.value should be(UnverifiedJwt(token.header, token.claims))
       }
     }

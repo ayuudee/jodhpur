@@ -7,14 +7,18 @@ import com.jesusthecat.jodhpur.util.Base64
 import scalaz._, Scalaz._
 import argonaut._
 
-/** Reads [[JavascriptWebToken]] from JSON. */
-class JWTReader(secret: Option[Array[Byte]] = None,
+/** Reads [[JavascriptWebToken]] from JSON.
+  * 
+  * @param cryptoParams The cryptographic parameters that are expected to have been used
+  * to sign a JWT. If `cryptoParams` is [[com.jesusthecat.jodhpur.NoCrypto]], only
+  * unverified JWTs are accepted; otherwise, unverified JWTs are not accepted.
+  */
+class JWTReader(cryptoParams: CryptoParams,
                 audience: Option[StringOrUri] = None,
                 issuer: Option[StringOrUri] = None)
                (implicit clock: Clock = Clock.systemUTC()) {
 
   import JWTReader._
-
 
   /** Try read a [[JavascriptWebToken]] or provide errors (via validation). */
   def read(str: String): ValidationNel[String, JavascriptWebToken] = {
@@ -57,28 +61,29 @@ class JWTReader(secret: Option[Array[Byte]] = None,
 
   /** Check the signature (as appropriate) */
   private def verify(unverified: UnverifiedJwt,
-                     rep: EncodedRep): ValidationNel[String, JavascriptWebToken] = {
-    ((unverified.header.alg, rep.signatureBytesDecoded) match {
+    rep: EncodedRep): ValidationNel[String, JavascriptWebToken] = {
+    if(unverified.header.alg != cryptoParams.algorithm) {
+      MsgSecretRequired.failNel
+    } else {
+      ((unverified.header.alg, rep.signatureBytesDecoded) match {
 
-      // Plaintext.
-      case (NoAlgorithm, _) => unverified.successNel
+        case (NoAlgorithm, _) => unverified.successNel
 
-      // JWS.
-      case (alg, Some(sbx)) =>
-        val verified =
-          secret
-            .map(s => alg.sign(s, rep.signingInput))
-            .exists(bx => java.util.Arrays.equals(bx, sbx))
-        if (!verified) MsgSecretRequired.failNel
-        else {
-          VerifiedJwt(unverified.header, unverified.claims).successNel
+        case (alg, Some(sbx)) =>
+          import java.util.Arrays
+          cryptoParams match {
+            case HasCrypto(secret, expectedAlg) if
+              Arrays.equals(alg.sign(secret, rep.signingInput), sbx) =>
+            VerifiedJwt(unverified.header, unverified.claims).successNel
+          case _ => MsgSecretRequired.failNel
         }
 
-      // Not enough information to verify.
-      case _ => MsgSecretRequired.failNel
-    }) flatMap {jwt =>
-      (validateExpiry(jwt) |@| validateIssuer(jwt) |@| validateAudience(jwt)) {
-        case (_, _, v) => v
+        // Not enough information to verify.
+        case _ => MsgSecretRequired.failNel
+      }) flatMap {jwt =>
+        (validateExpiry(jwt) |@| validateIssuer(jwt) |@| validateAudience(jwt)) {
+          case (_, _, v) => v
+        }
       }
     }
   }
